@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>An introduction to relative survival analysis using R</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Tengku Muhd Hanis Mokhtar" />
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/remark-css/chocolate-fonts.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# An introduction to relative survival analysis using R
+## confeRence 2020
+### Tengku Muhd Hanis Mokhtar
+### PhD student, USM
+### November22, 2020
+
+---
+
+
+
+
+
+
+<div>
+<style type="text/css">.xaringan-extra-logo {
+width: 50px;
+height: 60px;
+z-index: 0;
+background-image: url(R_MY.jpg);
+background-size: contain;
+background-repeat: no-repeat;
+position: absolute;
+top:1em;right:1em;
+}
+</style>
+<script>(function () {
+  let tries = 0
+  function addLogo () {
+    if (typeof slideshow === 'undefined') {
+      tries += 1
+      if (tries < 10) {
+        setTimeout(addLogo, 100)
+      }
+    } else {
+      document.querySelectorAll('.remark-slide-content:not(.title-slide):not(.inverse):not(.hide_logo)')
+        .forEach(function (slide) {
+          const logo = document.createElement('div')
+          logo.classList = 'xaringan-extra-logo'
+          logo.href = null
+          slide.appendChild(logo)
+        })
+    }
+  }
+  document.addEventListener('DOMContentLoaded', addLogo)
+})()</script>
+</div>
+
+## About myself
+.left-column[
+&lt;img src="tengku_hanis.jpg" width="4032" style="background-color: #5c5a54; padding:5px;" /&gt;
+]
+
+.right-column[
+Background: 
+- PhD student in Department of Community Medicine, USM
+- MSc (Medical Statistics) from USM, 2019
+- MBBCh from Al-Azhar University, 2015
+
+Interest:
+- Medical statistics, population-based study
+- Machine learning application in medical sciences
+- Application of R (and Python) in medical data
+
+Contact me:
+- tengkuhanismokhtar@gmail.com
+- Linkedin: Tengku Muhammad Hanis
+- Website: https://tengkuhanis.netlify.app/
+]
+
+.footnote[
+.center[
+Download material:
+https://github.com/tengku-hanis/relative-survival-nov2020
+]
+]
+---
+ 
+### Survival framework
+
+.center[![framework](survival framework.gif)]
+
+---
+
+### The difference (ie. study design)
+
+.center[![classification](classification.gif)]
+
+---
+
+## Relative survival
+
+- General idea of relative survival (S&lt;sub&gt;r&lt;/sub&gt;):
+
+`$$S_r = \frac{S_o}{S_e}$$`
+.center[
+S&lt;sub&gt;o&lt;/sub&gt; denotes overall survival in the observed population   
+S&lt;sub&gt;e&lt;/sub&gt; denotes overall survival in the expected population
+]
+
+- Relative survival rates (S&lt;sub&gt;r&lt;/sub&gt;) is the ratio of overall survival of an observed population to the overall survival of an expected population in which there is no event of interest
+
+- We can summarise relative survival (though mathematically incorrect!) as:     
+
+`$$\text{Relative survival} = \text{Observed survival} - \text{Expected survival}$$`
+
+---
+
+## Why and when?
+
+### Cause-specific survival VS relative survival   
+- Choose based on **data availability**  
+
+- **Population-based study**, should use relative survival  
+
+- Relative survival is better for **comparison** between populations and subpopulations 
+
+- Slight misclassification of death lead to **large bias** (in cause-specific survival)  
+
+- The use of different population mortality data lead to a **minor change** of survival estimate (in relative survival) 
+
+---
+
+## Application to colrec data
+
+1. Expanding abridged life table to a complete life table 
+
+2. Convert expanded complete life table into a rate table
+   - Use R (MortalityLaws package)
+   - Use MortPak software 
+   
+3. Application of relative survival analysis (non-parametric):
+   - Estimation of the net survival or relative survival rate 
+     - Assumptions (theoretical):
+         1. Independence between mortality due to the disease of interest and mortality due to other causes
+         2. Comparability of the observed and expected population
+     
+   - Crude probability of death:  
+   - Expected number of years lost due to the disease
+  
+---
+
+Example of  abridged life table
+
+
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:right;"&gt; Year &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; Age &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; mx &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; qx &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; ax &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; lx &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; dx &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; Lx &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; Tx &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; ex &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:right;"&gt; 1983 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.01429 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.01411 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.12 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 100000 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1411 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 98759 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 6677791 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 66.78 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:right;"&gt; 1983 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 1-4 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.00066 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.00262 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1.74 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 98589 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 258 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 393771 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 6579032 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 66.73 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:right;"&gt; 1983 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 5-9 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.00036 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.00182 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 2.66 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 98331 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 179 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 491234 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 6185261 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 62.90 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:right;"&gt; 1983 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 10-14 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.00026 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.00132 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 3.10 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 98152 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 129 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 490512 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 5694027 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 58.01 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:right;"&gt; 1983 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 15-19 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.00104 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.00518 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 2.94 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 98022 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 508 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 489063 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 5203515 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 53.09 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:right;"&gt; 1983 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 20-24 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.00155 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.00773 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 2.26 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 97515 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 754 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 485509 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 4714452 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 48.35 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+Example of a complete life table
+
+
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:right;"&gt; Year &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; Age &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; mx &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; qx &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; ax &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; lx &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; dx &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; Lx &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; Tx &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; ex &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:right;"&gt; 1983 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.01429 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.01411 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.12 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 100000 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1411 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 98759 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 6677791 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 66.78 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:right;"&gt; 1983 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.00109 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.00109 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.50 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 98589 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 107 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 98535 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 6579032 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 66.73 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:right;"&gt; 1983 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 2 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.00033 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.00033 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.50 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 98482 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 32 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 98465 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 6480497 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 65.80 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:right;"&gt; 1983 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 3 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.00070 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.00070 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.50 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 98449 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 69 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 98415 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 6382031 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 64.83 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:right;"&gt; 1983 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 4 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.00051 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.00051 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.50 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 98380 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 50 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 98355 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 6283617 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 63.87 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:right;"&gt; 1983 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 5 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.00013 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.00013 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.50 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 98331 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 13 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 98324 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 6185261 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 62.90 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+
+
+
+
+
+## Part 1: Expand abridged life table 
+
+- Package: MortalityLaws
+- The 5x1 abridged life table for Slovenia male and female was downloaded from human mortality database website (https://www.mortality.org/) 
+
+### For male
+
+
+```r
+## Expand male
+age_int &lt;- c(0, 1, seq(5, 110, by = 5))  # age interval in abridged life table
+age_range &lt;- 0:110  # range of age to be expanded
+
+# filter 1994-2005
+slovenia_male$Year &lt;- as.factor(slovenia_male$Year)
+by_yearM &lt;- slovenia_male %&gt;% filter(Year %in% 1994:2005) %&gt;% group_by(Year) %&gt;% 
+    nest()
+
+# Separate mx in list
+mx_male &lt;- vector("list", 0)
+for (i in seq_along(by_yearM$data)) {
+    mx_male[[i]] &lt;- by_yearM$data[[i]]$mx
+}
+```
+
+---
+
+#### Mortality law
+
+- Parametric function that describes the dying-out process of individuals in a population during a significant portion of their life spans 
+
+- Which to choose depend on the literature or the expert opinion
+
+- Use availableLaws() to see more laws
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; YEAR &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; NAME &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; MODEL &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; 1871 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Thiele &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; mu[x] = A exp(-Bx) + C exp[-.5D (x-E)^2] + F exp(Gx) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; 1883 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Wittstein &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; q[x] = (1/B) A^-[(Bx)^N] + A^-[(M-x)^N] &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; 1979 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Siler &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; mu[x] = A exp(-Bx) + C + D exp(Ex) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; 1980 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Heligman-Pollard &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; q[x]/p[x] = A^[(x + B)^C] + D exp[-E log(x/F)^2] + G H^x &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; 1980 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Heligman-Pollard &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; q[x] = A^[(x + B)^C] + D exp[-E log(x/F)^2] + GH^x / [1 + GH^x] &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; 1980 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Heligman-Pollard &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; q[x] = A^[(x + B)^C] + D exp[-E log(x/F)^2] + GH^x / [1 + KGH^x] &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; 1980 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Heligman-Pollard &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; q[x] = A^[(x + B)^C] + D exp[-E log(x/F)^2] + GH^(x^K) / [1 + GH^(x^K)] &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+
+```r
+# Estimate coeffcient
+models_male &lt;- vector("list", 0)
+for (i in seq_along(mx_male)) {
+    models_male[[i]] &lt;- MortalityLaw(age_int, mx = mx_male[[i]], law = "siler", opt.method = "LF2")
+}
+
+# Expand life table
+male_1994_2005 &lt;- vector("list", 0)
+for (i in seq_along(models_male)) {
+    male_1994_2005[[i]] &lt;- LawTable(age_range, par = models_male[[i]]$coefficients, 
+        law = "siler", sex = "male")
+}
+
+# Combine life table into data frame
+male_list &lt;- vector("list", 0)
+for (i in seq_along(male_1994_2005)) {
+    male_list[[i]] &lt;- data.frame(male_1994_2005[[i]]$lt)
+}
+
+male_lt &lt;- male_list %&gt;% enframe() %&gt;% unnest(cols = value)
+```
+
+---
+
+### For female
+
+
+```r
+## Expand female age interval and range of age as male
+
+# filter 1994-2005
+slovenia_female$Year &lt;- as.factor(slovenia_female$Year)
+by_yearF &lt;- slovenia_female %&gt;% filter(Year %in% 1994:2005) %&gt;% group_by(Year) %&gt;% 
+    nest()
+
+# Separate mx in list
+mx_female &lt;- vector("list", 0)
+for (i in seq_along(by_yearM$data)) {
+    mx_female[[i]] &lt;- by_yearM$data[[i]]$mx
+}
+
+# Estimate coeffcient
+models_female &lt;- vector("list", 0)
+for (i in seq_along(mx_female)) {
+    models_female[[i]] &lt;- MortalityLaw(age_int, mx = mx_female[[i]], law = "siler", 
+        opt.method = "LF2")
+}
+```
+
+---
+
+
+```r
+# Expand life table
+female_1994_2005 &lt;- vector("list", 0)
+for (i in seq_along(models_female)) {
+    female_1994_2005[[i]] &lt;- LawTable(age_range, par = models_female[[i]]$coefficients, 
+        law = "siler", sex = "female")
+}
+
+# Combine life table into data frame
+female_list &lt;- vector("list", 0)
+for (i in seq_along(female_1994_2005)) {
+    female_list[[i]] &lt;- data.frame(female_1994_2005[[i]]$lt)
+}
+
+female_lt &lt;- female_list %&gt;% enframe() %&gt;% unnest(cols = value)
+```
+
+---
+
+## Part 2: Make a rate table
+
+- Package: relsurv
+- We need survival probability (px) for a rate table:
+
+`$$px = 1 -qx$$`
+
+
+```r
+## Make a rate table select age(x) and probability of dying(qx) px (survival
+## probability) = 1 - qx
+pop_m &lt;- male_lt %&gt;% mutate(year = rep(1994:2005, each = 111), px = 1 - qx) %&gt;% select(x, 
+    year, px)
+pop_f &lt;- female_lt %&gt;% mutate(year = rep(1994:2005, each = 111), px = 1 - qx) %&gt;% 
+    select(x, year, px)
+
+# long -&gt; wide use px (survival probability)
+pop_m.w &lt;- pivot_wider(pop_m, names_from = year, values_from = px)
+pop_f.w &lt;- pivot_wider(pop_f, names_from = year, values_from = px)
+```
+
+
+```r
+pop_m.w[1:4, 1:9]
+```
+
+```
+## # A tibble: 4 x 9
+##       x `1994` `1995` `1996` `1997` `1998` `1999` `2000` `2001`
+##   &lt;int&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;
+## 1     0  0.993  0.994  0.994  0.994  0.994  0.995  0.994  0.995
+## 2     1  1.00   1.00   1.00   1.00   1.00   1.00   1.00   1.00 
+## 3     2  1.00   1.00   1.00   1.00   1.00   1.00   1.00   1.00 
+## 4     3  1.00   1.00   1.00   1.00   1.00   1.00   1.00   1.00
+```
+
+---
+
+
+
+```r
+# delete age column (x)
+pop_m.w$x &lt;- NULL
+pop_f.w$x &lt;- NULL
+
+# as matrix
+pop_fwm &lt;- as.matrix(pop_f.w)
+pop_mwm &lt;- as.matrix(pop_m.w)
+str(pop_fwm)
+```
+
+```
+##  num [1:111, 1:12] 0.993 1 1 1 1 ...
+##  - attr(*, "dimnames")=List of 2
+##   ..$ : NULL
+##   ..$ : chr [1:12] "1994" "1995" "1996" "1997" ...
+```
+
+```r
+# ratetable
+pop_rate &lt;- transrate(men = pop_mwm, women = pop_fwm, yearlim = c(1994, 2005), int.length = 1)
+is.ratetable(pop_rate)
+```
+
+```
+## [1] TRUE
+```
+
+
+
+```r
+summary(pop_rate)
+```
+
+```
+##  Rate table with 3 dimensions:
+## 	age ranges from 0 to 40176.51; with 111 categories
+## 	sex has levels of: male female
+## 	year ranges from 12419 to 16437; with 12 categories
+```
+
+---
+
+## Part 3: Non-parametric relative survival
+
+Package: relsurv
+
+colrec data: 
+- Data in relsurv package provided by Slovene Cancer Registry
+- Survival of patients with colon and rectal cancer diagnosed in 1994-2000.
+- Format
+  - A data frame with 5971 observations on the following 7 variables:
+  - Sex: sex (1=male, 2=female)
+  - Age*: age (in days)
+  - Diag*: date of diagnosis (in date format)
+  - Time*: survival time (in days)
+  - Stat: censoring indicator (0=censoring, 1=death)
+  - Stage: cancer stage (Values 1-3, code 99 stands for unknown)
+  - Site: cancer site     
+      
+.footnote[**variables are randomly perturbed to make the identification of patients impossible*]
+
+---
+
+### Packages
+
+
+```r
+library(relsurv)
+library(survminer)
+```
+
+We are going to edit data, so to limit follow-up time to 5 years only
+
+
+```r
+# limit follow-up time to 5 years
+colrec$end &lt;- colrec$diag + colrec$time
+# recode end time
+colrec$end2 &lt;- ifelse(colrec$end &gt; as.date("31Dec2005", order = "dmy"), as.date("31Dec2005", 
+    order = "dmy"), colrec$end)
+# recode the status
+colrec$stat2 &lt;- ifelse(colrec$end &gt; as.date("31Dec2005", order = "dmy"), 0, colrec$stat)
+# edit follow-up time
+colrec$time2 &lt;- colrec$end2 - colrec$diag
+```
+
+---
+
+### Fit Pohar-perme
+
+
+```r
+rs_PP &lt;- rs.surv(Surv(time2, stat2) ~ 1, 
+*                rmap = list(age = age, sex = sex, year = diag),
+                 method = "pohar-perme",
+                 ratetable = slopop,
+                 data = colrec)
+
+summary(rs_PP, times = 1:5 * 365.241)
+```
+
+```
+## Call: rs.surv(formula = Surv(time2, stat2) ~ 1, data = colrec, ratetable = slopop, 
+##     method = "pohar-perme", rmap = list(age = age, sex = sex, 
+##         year = diag))
+## 
+##  time n.risk n.event survival std.err lower 95% CI upper 95% CI
+##   365   3919    2048    0.682 0.00641        0.669        0.695
+##   730   3144     774    0.568 0.00704        0.554        0.582
+##  1096   2715     429    0.509 0.00738        0.494        0.523
+##  1461   2387     328    0.466 0.00764        0.451        0.481
+##  1826   2163     224    0.441 0.00791        0.426        0.457
+```
+
+---
+
+We are going to use survminer package to plot instead the base R function
+
+
+
+
+```r
+ggsurvplot(rs_PP, conf.int = T, xscale = "d_y", break.x.by = 365.24, xlab = "Years following diagnosis", 
+    title = "Pohar-perme method", censor = F, legend = "none")
+```
+
+&lt;img src="confeRence2020_files/figure-html/unnamed-chunk-15-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+### Fit other estimators
+
+
+```r
+# Edere 1
+rs_e1 &lt;- rs.surv(Surv(time2, stat2) ~ 1, rmap = list(age = age, sex = sex, year = diag), 
+    method = "ederer1", ratetable = slopop, data = colrec)
+# Ederer2
+rs_e2 &lt;- rs.surv(Surv(time2, stat2) ~ 1, rmap = list(age = age, sex = sex, year = diag), 
+    method = "ederer2", ratetable = slopop, data = colrec)
+# Hakulinen
+rs_h &lt;- rs.surv(Surv(time2, stat2) ~ 1, rmap = list(age = age, sex = sex, year = diag), 
+    method = "hakulinen", ratetable = slopop, data = colrec)
+```
+
+### Compare all estimators
+
+
+```r
+rs_list &lt;- list(`Pohar-perme` = rs_PP, Ederer1 = rs_e1, Ederer2 = rs_e2, Hakulinen = rs_h)
+ggsurvplot(rs_list, data = colrec, conf.int = T, censor = F, combine = T, xscale = "d_y", 
+    break.x.by = 365.24, xlab = "Years following diagnosis", ylab = "Relative survival", 
+    title = "Relative survival", legend = "top", legend.title = "Estimators", legend.labs = c("Pohar-perme", 
+        "Ederer1", "Ederer2", "Hakulinen"))
+```
+
+---
+
+&lt;img src="confeRence2020_files/figure-html/unnamed-chunk-18-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+### Compare life table
+
+
+```r
+# Pohar-perme with expanded life table
+rs_PP_expand &lt;- rs.surv(Surv(time2, stat2) ~ 1, rmap = list(age = age, sex = sex, 
+    year = diag), method = "pohar-perme", ratetable = pop_rate, data = colrec)
+
+# Compare plot
+compare_lt &lt;- list(`Non-expanded` = rs_PP, Expanded = rs_PP_expand)
+ggsurvplot(compare_lt, data = colrec, conf.int = T, combine = T, censor = F, xscale = "d_y", 
+    break.x.by = 365.24, xlab = "Years following diagnosis", ylab = "Relative survival", 
+    title = "Relative survival using Pohar-Perme", legend = "top", legend.title = "Life table:", 
+    legend.labs = c("Non-expanded", "Expanded"))
+```
+
+---
+
+&lt;img src="confeRence2020_files/figure-html/unnamed-chunk-20-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+Differences between relative survival estimate of expanded and non-expanded life table
+
+&lt;img src="confeRence2020_files/figure-html/unnamed-chunk-21-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+### Log-rank type test for comparison of net survival curves
+
+
+```r
+diff_site &lt;- rs.diff(Surv(time2, stat2) ~ site, rmap = list(age = age, sex = sex, 
+    year = diag), data = colrec, ratetable = slopop)
+diff_site
+```
+
+```
+## Value of test statistic: 0.2355707 
+## Degrees of freedom: 1 
+## P value: 0.6274237
+```
+
+
+```r
+diff_rs &lt;- rs.surv(Surv(time2, stat2) ~ site, rmap = list(age = age, sex = sex, year = diag), 
+    data = colrec, ratetable = slopop)
+ggsurvplot(diff_rs, data = colrec, conf.int = T, combine = T, censor = F, xscale = "d_y", 
+    break.x.by = 365.24, xlab = "Years following diagnosis", ylab = "Relative survival", 
+    title = "Relative survival using Pohar-Perme", legend = "top", legend.title = "Site:", 
+    legend.labs = c("Colon", "Rectum"))
+```
+
+---
+
+&lt;img src="confeRence2020_files/figure-html/unnamed-chunk-24-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+### Crude probability of death and year lost
+
+
+```r
+cpdeath &lt;- cmp.rel(Surv(time2, stat2) ~ site, rmap = list(age = age, sex = sex, year = diag), 
+    ratetable = slopop, data = colrec, tau = 3652.41)
+# tau = 3652.41, value after 10 years is censored
+summary(cpdeath, times = c(1, 5, 10), scale = 365.24)$est  #scale default 1:day
+```
+
+```
+##                                  1         5        10
+*## causeSpec siterectum=0  0.34003855 0.5269945 0.5445191
+## population siterectum=0 0.02916328 0.1036957 0.1784933
+*## causeSpec siterectum=1  0.27453284 0.5438010 0.5843705
+## population siterectum=1 0.03084100 0.1033123 0.1678205
+```
+
+- Within 10 years after diagnosis 58.4% of patients have died due to rectal cancer and 54.5% of patients have died due to colon cancer
+
+---
+
+
+```r
+cpdeath
+```
+
+```
+## Estimates, variances and area under the curves:
+## $est
+##                                  2          4         6         8
+## causeSpec siterectum=0  0.43423535 0.50738517 0.5377674 0.5447054
+## population siterectum=0 0.05099486 0.08736450 0.1195701 0.1497519
+## causeSpec siterectum=1  0.40139481 0.51857321 0.5587463 0.5731538
+## population siterectum=1 0.05364613 0.08864497 0.1169295 0.1431313
+## 
+## $var
+##                                    2            4            6            8
+## causeSpec siterectum=0  7.855896e-05 8.542588e-05 9.140629e-05 1.040238e-04
+## population siterectum=0 2.756566e-07 1.236647e-06 2.988433e-06 5.658865e-06
+## causeSpec siterectum=1  1.117243e-04 1.193491e-04 1.245047e-04 1.389559e-04
+## population siterectum=1 3.178646e-07 1.454460e-06 3.461529e-06 6.550556e-06
+## 
+## $area
+##                         Area at tau = 10
+*## causeSpec siterectum=0         4.8086656
+## population siterectum=0        1.0017281
+*## causeSpec siterectum=1         4.8209210
+## population siterectum=1        0.9814313
+```
+
+- area = year lost due to the disease
+- Patients with rectal cancer lost 4.8 years due to the cancer
+- Patients with colon cancer lost 4.8 years due to the cancer
+
+---
+
+
+```r
+plot(cpdeath, xscale = 365.24, col = 1:4, conf.int = c(1, 3), xlab = "Years following diagnosis", 
+    main = "Crude probabily of death")
+```
+
+&lt;img src="confeRence2020_files/figure-html/unnamed-chunk-27-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+## References
+
+1. Mariotto, A.B.; Noone, A.M.; Howlader, N.; Cho, H.; Keel, G.E.; Garshell, J.; Woloshin, S.; Schwartz, L.M. Cancer survival: An overview of measures, uses, and interpretation. J. Natl. Cancer Inst. - Monogr. 2014, 2014, 145-186, doi:10.1093/jncimonographs/lgu024.
+2. Lambert, P.C.; Dickman, P.W.; Rutherford, M.J. Comparison of different approaches to estimating age standardized net survival. BMC Med. Res. Methodol. 2015, 15, 1-13, doi:10.1186/s12874-015-0057-3.
+3. Roche, L.; Danieli, C.; Belot, A.; Grosclaude, P.; Bouvier, A.M.; Velten, M.; Iwaz, J.; Remontet, L.; Bossard, N. Cancer net survival on registry data: Use of the new unbiased Pohar-Perme estimator and magnitude of the bias with the classical methods. Int. J. Cancer 2013, 132, 2359-2369, doi:10.1002/ijc.27830.
+4. UKIACR Standard Operating Procedure: Guidelines on Population Based Cancer Survival Analysis; 2016;
+5. Pohar, M.; Stare, J. Relative survival analysis in R. Comput. Methods Programs Biomed. 2006, 81, 272-278, doi:10.1016/j.cmpb.2006.01.004.
+6. Perme, M.P.; Pavlic, K. Nonparametric Relative Survival Analysis with the R Package relsurv. J. Stat. Softw. 2018, 87, doi:10.18637/jss.v087.i08.
+7. Sarfati, D.; Blakely, T.; Pearce, N. Measuring cancer survival in populations: Relative survival vs cancer-specific survival. Int. J. Epidemiol. 2010, 39, 598-610, doi:10.1093/ije/dyp392.
+
+---
+
+class: center, middle
+
+&lt;img src="conference_logo.png" width="2133" /&gt;
+
+# Thanks!
+
+Slides created via the R package [**xaringan**](https://github.com/yihui/xaringan)
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
