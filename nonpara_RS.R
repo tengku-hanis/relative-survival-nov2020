@@ -11,9 +11,9 @@ library(tidyverse)
 library(relsurv)
 
 ## Abridged life table (from github)
-slovenia_male <- read.table("https://raw.githubusercontent.com/tengku-hanis/relative-survival-nov2020/main/slovenia_males.txt", 
+slovenia_male <- read.table("https://raw.githubusercontent.com/tengku-hanis/relative-survival-nov2020/master/slovenia_males.txt", 
                             header = TRUE, quote="\"")
-slovenia_female <- read.table("https://raw.githubusercontent.com/tengku-hanis/relative-survival-nov2020/main/slovenia_females.txt", 
+slovenia_female <- read.table("https://raw.githubusercontent.com/tengku-hanis/relative-survival-nov2020/master/slovenia_females.txt", 
                               header=TRUE, quote="\"")
 
 ## Expand male
@@ -141,11 +141,11 @@ rs_PP <- rs.surv(Surv(time2, stat2) ~ 1,
 summary(rs_PP, times = 1:12 * 365.241)
 
 # Plot 
-plot(rs_PP, xlab = "Time(years)", ylab = "Relative survival", xscale = 365.24, 
+plot(rs_PP, xlab = "Years following diagnosis", ylab = "Relative survival", xscale = 365.24, 
      main="Pohar-perme method")
 
 # Plot using survminer
-ggsurvplot(rs_PP, conf.int = T, xscale="d_y", break.x.by= 365.24, xlab= "Time(years)", 
+ggsurvplot(rs_PP, conf.int = T, xscale="d_y", break.x.by= 365.24, xlab= "Years following diagnosis", 
            title= "Pohar-perme method", censor=F, legend = "none")
 
 ## Other estimators
@@ -173,7 +173,7 @@ rs_list <- list("Pohar-perme" = rs_PP, "Ederer1" = rs_e1, "Ederer2" = rs_e2,
                 "Hakulinen" = rs_h)
 ggsurvplot(rs_list, data = colrec, conf.int = T, combine = T,  xscale="d_y", 
            break.x.by= 365.24, censor = F,
-           xlab= "Time(years)", ylab="Relative survival",  
+           xlab= "Years following diagnosis", ylab="Relative survival",  
            title= "Relative survival", 
            legend="top", legend.title= "Estimators", 
            legend.labs=c("Pohar-perme", "Ederer1", "Ederer2", "Hakulinen"))
@@ -188,14 +188,14 @@ rs_PP_expand <- rs.surv(Surv(time2, stat2) ~ 1,
 summary(rs_PP_expand, times = 1:12 * 365.241)
 
 
-plot(rs_PP_expand, xlab = "Time(years)", ylab = "Relative survival", xscale = 365.24, 
+plot(rs_PP_expand, xlab = "Years following diagnosis", ylab = "Relative survival", xscale = 365.24, 
      main="Pohar-perme method")
 
 # Compare plot
 compare_lt <- list("Non-expanded" = rs_PP, "Expanded" = rs_PP_expand)
 ggsurvplot(compare_lt, data = colrec, conf.int = T, combine = T,  xscale="d_y", 
            break.x.by= 365.24, censor = F,
-           xlab= "Time(years)", ylab="Relative survival",  
+           xlab= "Years following diagnosis", ylab="Relative survival",  
            title= "Relative survival using Pohar-Perme", 
            legend="top", legend.title= "Life table:", 
            legend.labs=c("Non-expanded", "Expanded"))
@@ -211,7 +211,7 @@ ggplot(dat_diff, aes(year, diff)) + geom_point() +
   geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
   labs(title = "Relative survival different between rate table", 
        subtitle = "(Non-expand - Expand)",
-       x = "Years", y = "Relative survival different") +
+       x = "Years following diagnosis", y = "Relative survival different") +
   theme_bw()
 
 ## Compare relative survival between sites
@@ -226,7 +226,7 @@ diff_rs <- rs.surv(Surv(time2, stat2) ~ site,
                    data = colrec, ratetable = slopop)
 ggsurvplot(diff_rs, data = colrec, conf.int = T, combine = T,  xscale="d_y", 
            break.x.by= 365.24, censor = F,
-           xlab= "Time(years)", ylab="Relative survival",  
+           xlab= "Years following diagnosis", ylab="Relative survival",  
            title= "Relative survival using Pohar-Perme", 
            legend="top", legend.title= "Site:", 
            legend.labs=c("Colon", "Rectum"))
@@ -246,6 +246,6 @@ cpdeath
   # patients with colorectal cancer at colon lost 4.8 years
 
 plot(cpdeath, xscale = 365.24 ,col = 1:4, conf.int = c(3, 1),
-     xlab = "Time(years)", main = "Crude probabily of death")
+     xlab = "Years following diagnosis", main = "Crude probabily of death")
 
 
