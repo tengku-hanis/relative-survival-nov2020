@@ -136,10 +136,10 @@ S&lt;sub&gt;e&lt;/sub&gt; denotes overall survival in the expected population
 ## Application to colrec data
 
 1. Expanding abridged life table to a complete life table 
+   - Use R (MortalityLaws package)
+   - Use MortPak software
 
 2. Convert expanded complete life table into a rate table
-   - Use R (MortalityLaws package)
-   - Use MortPak software 
    
 3. Application of relative survival analysis (non-parametric):
    - Estimation of the net survival or relative survival rate 
@@ -604,7 +604,7 @@ colrec data:
   - Time*: survival time (in days)
   - Stat: censoring indicator (0=censoring, 1=death)
   - Stage: cancer stage (Values 1-3, code 99 stands for unknown)
-  - Site: cancer site     
+  - Site: cancer site (colon, rectum)  
       
 .footnote[**variables are randomly perturbed to make the identification of patients impossible*]
 
