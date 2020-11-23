@@ -1,6 +1,6 @@
 # Material for Malaysian R conference 2020
 Title: An introduction to relative analysis using R   
-Date: 21-11-2020   
+Date: 22-11-2020   
 Organiser: Malaysian R User Group (MyRUG)   
 Content:  
 1. Slides
